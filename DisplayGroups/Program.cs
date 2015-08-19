@@ -8,15 +8,14 @@ namespace DisplayGroups
 {
     internal class Program
     {
-        private static readonly Dictionary<IdentityDescriptor, TeamFoundationIdentity> m_identities =
-            new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
 
-        private static readonly List<TeamFoundationIdentity> m_groups = new List<TeamFoundationIdentity>();
 
         private static void Main(string[] args)
         {
             IIdentityManagementService ims;
-            TeamFoundationIdentity[] identities;
+            TeamFoundationIdentity[] memberIdentities;
+            var membershipGroups = new List<TeamFoundationIdentity>();
+            var allIdentities = new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
 
             if (args.Length == 0)
             {
@@ -42,12 +41,12 @@ namespace DisplayGroups
 
             if (group.Members.Length > batchSizeLimit)
             {
-                BatchUpMembershipThatExceedsSizeLimit(@group, batchSizeLimit, ims);
+                BatchUpMembershipThatExceedsSizeLimit(@group, batchSizeLimit, ims, membershipGroups, allIdentities);
             }
             else
             {
-                identities = ims.ReadIdentities(group.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
-                SortIdentities(identities);
+                memberIdentities = ims.ReadIdentities(group.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
+                SortIdentities(memberIdentities, membershipGroups, allIdentities);
             }
 
             // Now output groups and their members. We have to call Read just once more, 
@@ -55,24 +54,24 @@ namespace DisplayGroups
             group = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
                 ReadIdentityOptions.None);
 
-            Write(group);
+            Write(group, allIdentities);
 
-            foreach (var identity in m_groups)
+            foreach (var identity in membershipGroups)
             {
-                Write(identity);
+                Write(identity, allIdentities);
             }
 
-            Console.WriteLine("======= Finished reading {0} identities in {1} minutes", m_identities.Count,
+            Console.WriteLine("======= Finished reading {0} identities in {1} minutes", allIdentities.Count,
                 (DateTime.Now - startTime).TotalMinutes);
         }
 
         private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity @group, int batchSizeLimit,
-            IIdentityManagementService ims)
+            IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             var batchNum = 0;
             var remainder = @group.Members.Length;
             var descriptors = new IdentityDescriptor[batchSizeLimit];
-            TeamFoundationIdentity[] identities;
+            TeamFoundationIdentity[] memberIdentities;
 
             while (remainder > 0)
             {
@@ -85,8 +84,8 @@ namespace DisplayGroups
                 }
 
                 Array.Copy(@group.Members, startAt, descriptors, 0, length);
-                identities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
-                SortIdentities(identities);
+                memberIdentities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
+                SortIdentities(memberIdentities, membershipGroups, allIdentities);
                 remainder -= length;
             }
         }
@@ -97,20 +96,21 @@ namespace DisplayGroups
             Console.WriteLine("Example: DisplayGroups.exe https://myaccount.visualstudio.com/DefaultCollection");
         }
 
-        private static void SortIdentities(TeamFoundationIdentity[] identities)
+        private static void SortIdentities(TeamFoundationIdentity[] identities, List<TeamFoundationIdentity> membershipGroups,
+            Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             foreach (var identity in identities)
             {
-                m_identities.Add(identity.Descriptor, identity);
+                allIdentities.Add(identity.Descriptor, identity);
 
                 if (identity.IsContainer)
                 {
-                    m_groups.Add(identity);
+                    membershipGroups.Add(identity);
                 }
             }
         }
 
-        private static void Write(TeamFoundationIdentity group)
+        private static void Write(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             // Output this group's membership
             Console.WriteLine("Members of group: {0}", group.DisplayName);
@@ -119,7 +119,7 @@ namespace DisplayGroups
             foreach (var memDesc in group.Members)
             {
                 // replace .UniqueName with .DisplayName if you just want the display name. UniqueName shows their email address.
-                Console.WriteLine(m_identities[memDesc].UniqueName);
+                Console.WriteLine(allIdentities[memDesc].UniqueName);
             }
 
             Console.WriteLine();
