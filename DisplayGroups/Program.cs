@@ -6,14 +6,11 @@ using Microsoft.TeamFoundation.Framework.Common;
 
 namespace DisplayGroups
 {
-    internal class Program
+    public class Program
     {
-
 
         private static void Main(string[] args)
         {
-            IIdentityManagementService ims;
-            TeamFoundationIdentity[] memberIdentities;
             var membershipGroups = new List<TeamFoundationIdentity>();
             var allIdentities = new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
 
@@ -27,42 +24,48 @@ namespace DisplayGroups
 
             var startTime = DateTime.Now;
 
-            var tfs =
-                TfsTeamProjectCollectionFactory.GetTeamProjectCollection(
-                    TfsTeamProjectCollection.GetFullyQualifiedUriForName(address));
-            ims = tfs.GetService<IIdentityManagementService>();
+            var ims = GetIdentityManagementService(address);
 
             // Get expanded membership of the Valid Users group, which is all identities in this host
-            var group = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
+            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
                 ReadIdentityOptions.None);
 
             // If total membership exceeds batch size limit for Read, break it up
-            var batchSizeLimit = 100000;
+            const int batchSizeLimit = 100000;
 
-            if (group.Members.Length > batchSizeLimit)
+            if (validUsersGroupMembers.Members.Length > batchSizeLimit)
             {
-                BatchUpMembershipThatExceedsSizeLimit(@group, batchSizeLimit, ims, membershipGroups, allIdentities);
+                BatchUpMembershipThatExceedsSizeLimit(validUsersGroupMembers, batchSizeLimit, ims, membershipGroups, allIdentities);
             }
             else
             {
-                memberIdentities = ims.ReadIdentities(group.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
+                var memberIdentities = ims.ReadIdentities(validUsersGroupMembers.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
                 SortIdentities(memberIdentities, membershipGroups, allIdentities);
             }
 
             // Now output groups and their members. We have to call Read just once more, 
             // to get direct membership of Valid Users group
-            group = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
+            validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
                 ReadIdentityOptions.None);
 
-            Write(group, allIdentities);
+            WriteGroupMembers(validUsersGroupMembers, allIdentities);
 
             foreach (var identity in membershipGroups)
             {
-                Write(identity, allIdentities);
+                WriteGroupMembers(identity, allIdentities);
             }
 
             Console.WriteLine("======= Finished reading {0} identities in {1} minutes", allIdentities.Count,
                 (DateTime.Now - startTime).TotalMinutes);
+        }
+
+        private static IIdentityManagementService GetIdentityManagementService(string address)
+        {
+            var tfs =
+                TfsTeamProjectCollectionFactory.GetTeamProjectCollection(
+                    TfsTeamProjectCollection.GetFullyQualifiedUriForName(address));
+            var ims = tfs.GetService<IIdentityManagementService>();
+            return ims;
         }
 
         private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity @group, int batchSizeLimit,
@@ -110,7 +113,7 @@ namespace DisplayGroups
             }
         }
 
-        private static void Write(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
+        private static void WriteGroupMembers(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             // Output this group's membership
             Console.WriteLine("Members of group: {0}", group.DisplayName);
