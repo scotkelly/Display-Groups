@@ -53,7 +53,7 @@ namespace DisplayGroups
         private static void AddExpandedMembershipOfValidUsersGroup(IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups,
             Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
-// Get expanded membership of the Valid Users group, which is all identities in this host
+            // Get expanded membership of the Valid Users group, which is all identities in this host
             var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
                 ReadIdentityOptions.None);
 
@@ -118,11 +118,15 @@ namespace DisplayGroups
         {
             foreach (var identity in identities)
             {
-                allIdentities.Add(identity.Descriptor, identity);
-
-                if (identity.IsContainer)
+                if (identity != null)
                 {
-                    membershipGroups.Add(identity);
+
+                    allIdentities.Add(identity.Descriptor, identity);
+
+                    if (identity.IsContainer)
+                    {
+                        membershipGroups.Add(identity);
+                    }
                 }
             }
         }
@@ -135,8 +139,11 @@ namespace DisplayGroups
 
             foreach (var memDesc in group.Members)
             {
-                // replace .UniqueName with .DisplayName if you just want the display name. UniqueName shows their email address.
-                Console.WriteLine(allIdentities[memDesc].UniqueName);
+                if (allIdentities.ContainsKey(memDesc))
+                {
+                    // replace .UniqueName with .DisplayName if you just want the display name. UniqueName shows their email address.
+                    Console.WriteLine(allIdentities[memDesc].UniqueName);
+                }
             }
 
             Console.WriteLine();
