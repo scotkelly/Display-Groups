@@ -40,7 +40,7 @@ namespace DisplayGroups
             else
             {
                 var memberIdentities = ims.ReadIdentities(validUsersGroupMembers.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
-                SortIdentities(memberIdentities, membershipGroups, allIdentities);
+                AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
             }
 
             // Now output groups and their members. We have to call Read just once more, 
@@ -48,11 +48,11 @@ namespace DisplayGroups
             validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
                 ReadIdentityOptions.None);
 
-            WriteGroupMembers(validUsersGroupMembers, allIdentities);
+            DisplayGroupMembers(validUsersGroupMembers, allIdentities);
 
             foreach (var identity in membershipGroups)
             {
-                WriteGroupMembers(identity, allIdentities);
+                DisplayGroupMembers(identity, allIdentities);
             }
 
             Console.WriteLine("======= Finished reading {0} identities in {1} minutes", allIdentities.Count,
@@ -88,7 +88,7 @@ namespace DisplayGroups
 
                 Array.Copy(@group.Members, startAt, descriptors, 0, length);
                 memberIdentities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
-                SortIdentities(memberIdentities, membershipGroups, allIdentities);
+                AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
                 remainder -= length;
             }
         }
@@ -99,7 +99,7 @@ namespace DisplayGroups
             Console.WriteLine("Example: DisplayGroups.exe https://myaccount.visualstudio.com/DefaultCollection");
         }
 
-        private static void SortIdentities(TeamFoundationIdentity[] identities, List<TeamFoundationIdentity> membershipGroups,
+        private static void AddCollectionUsersAndGroupsToLists(TeamFoundationIdentity[] identities, List<TeamFoundationIdentity> membershipGroups,
             Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             foreach (var identity in identities)
@@ -113,7 +113,7 @@ namespace DisplayGroups
             }
         }
 
-        private static void WriteGroupMembers(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
+        private static void DisplayGroupMembers(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             // Output this group's membership
             Console.WriteLine("Members of group: {0}", group.DisplayName);
