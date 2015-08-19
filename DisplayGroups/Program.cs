@@ -11,6 +11,8 @@ namespace DisplayGroups
 
         private static void Main(string[] args)
         {
+            var startTime = DateTime.Now;
+
             var membershipGroups = new List<TeamFoundationIdentity>();
             var allIdentities = new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
 
@@ -20,33 +22,15 @@ namespace DisplayGroups
                 return;
             }
 
-            var address = args[0];
+            var collectionAddress = args[0];
 
-            var startTime = DateTime.Now;
+            var ims = GetIdentityManagementService(collectionAddress);
 
-            var ims = GetIdentityManagementService(address);
-
-            // Get expanded membership of the Valid Users group, which is all identities in this host
-            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
-                ReadIdentityOptions.None);
-
-            // If total membership exceeds batch size limit for Read, break it up
-            const int batchSizeLimit = 100000;
-
-            if (validUsersGroupMembers.Members.Length > batchSizeLimit)
-            {
-                BatchUpMembershipThatExceedsSizeLimit(validUsersGroupMembers, batchSizeLimit, ims, membershipGroups, allIdentities);
-            }
-            else
-            {
-                var memberIdentities = ims.ReadIdentities(validUsersGroupMembers.Members, MembershipQuery.Direct, ReadIdentityOptions.None);
-                AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
-            }
+            AddExpandedMembershipOfValidUsersGroup(ims, membershipGroups, allIdentities);
 
             // Now output groups and their members. We have to call Read just once more, 
             // to get direct membership of Valid Users group
-            validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
-                ReadIdentityOptions.None);
+            var validUsersGroupMembers = GetAllValidUsers(ims);
 
             DisplayGroupMembers(validUsersGroupMembers, allIdentities);
 
@@ -57,6 +41,36 @@ namespace DisplayGroups
 
             Console.WriteLine("======= Finished reading {0} identities in {1} minutes", allIdentities.Count,
                 (DateTime.Now - startTime).TotalMinutes);
+        }
+
+        private static TeamFoundationIdentity GetAllValidUsers(IIdentityManagementService ims)
+        {
+            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
+                ReadIdentityOptions.None);
+            return validUsersGroupMembers;
+        }
+
+        private static void AddExpandedMembershipOfValidUsersGroup(IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups,
+            Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
+        {
+// Get expanded membership of the Valid Users group, which is all identities in this host
+            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
+                ReadIdentityOptions.None);
+
+            // If total membership exceeds batch size limit for Read, break it up
+            const int batchSizeLimit = 100000;
+
+            if (validUsersGroupMembers.Members.Length > batchSizeLimit)
+            {
+                BatchUpMembershipThatExceedsSizeLimit(validUsersGroupMembers, batchSizeLimit, ims, membershipGroups,
+                    allIdentities);
+            }
+            else
+            {
+                var memberIdentities = ims.ReadIdentities(validUsersGroupMembers.Members, MembershipQuery.Direct,
+                    ReadIdentityOptions.None);
+                AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
+            }
         }
 
         private static IIdentityManagementService GetIdentityManagementService(string address)
