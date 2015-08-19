@@ -68,11 +68,11 @@ namespace DisplayGroups
             return ims;
         }
 
-        private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity @group, int batchSizeLimit,
+        private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity membershipGroup, int batchSizeLimit,
             IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             var batchNum = 0;
-            var remainder = @group.Members.Length;
+            var remainder = membershipGroup.Members.Length;
             var descriptors = new IdentityDescriptor[batchSizeLimit];
             TeamFoundationIdentity[] memberIdentities;
 
@@ -86,7 +86,7 @@ namespace DisplayGroups
                     descriptors = new IdentityDescriptor[length];
                 }
 
-                Array.Copy(@group.Members, startAt, descriptors, 0, length);
+                Array.Copy(membershipGroup.Members, startAt, descriptors, 0, length);
                 memberIdentities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
                 AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
                 remainder -= length;
