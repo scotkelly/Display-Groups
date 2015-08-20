@@ -8,13 +8,13 @@ namespace DisplayGroups
 {
     public class Program
     {
-
         private static void Main(string[] args)
         {
             var startTime = DateTime.Now;
 
             var membershipGroups = new List<TeamFoundationIdentity>();
-            var allIdentities = new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
+            var allIdentities =
+                new Dictionary<IdentityDescriptor, TeamFoundationIdentity>(IdentityDescriptorComparer.Instance);
 
             if (args.Length == 0)
             {
@@ -45,16 +45,19 @@ namespace DisplayGroups
 
         private static TeamFoundationIdentity GetAllValidUsers(IIdentityManagementService ims)
         {
-            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Direct,
+            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup,
+                MembershipQuery.Direct,
                 ReadIdentityOptions.None);
             return validUsersGroupMembers;
         }
 
-        private static void AddExpandedMembershipOfValidUsersGroup(IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups,
+        private static void AddExpandedMembershipOfValidUsersGroup(IIdentityManagementService ims,
+            List<TeamFoundationIdentity> membershipGroups,
             Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             // Get expanded membership of the Valid Users group, which is all identities in this host
-            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup, MembershipQuery.Expanded,
+            var validUsersGroupMembers = ims.ReadIdentity(GroupWellKnownDescriptors.EveryoneGroup,
+                MembershipQuery.Expanded,
                 ReadIdentityOptions.None);
 
             // If total membership exceeds batch size limit for Read, break it up
@@ -82,13 +85,14 @@ namespace DisplayGroups
             return ims;
         }
 
-        private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity membershipGroup, int batchSizeLimit,
-            IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
+        private static void BatchUpMembershipThatExceedsSizeLimit(TeamFoundationIdentity membershipGroup,
+            int batchSizeLimit,
+            IIdentityManagementService ims, List<TeamFoundationIdentity> membershipGroups,
+            Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             var batchNum = 0;
             var remainder = membershipGroup.Members.Length;
             var descriptors = new IdentityDescriptor[batchSizeLimit];
-            TeamFoundationIdentity[] memberIdentities;
 
             while (remainder > 0)
             {
@@ -101,7 +105,7 @@ namespace DisplayGroups
                 }
 
                 Array.Copy(membershipGroup.Members, startAt, descriptors, 0, length);
-                memberIdentities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
+                var memberIdentities = ims.ReadIdentities(descriptors, MembershipQuery.Direct, ReadIdentityOptions.None);
                 AddCollectionUsersAndGroupsToLists(memberIdentities, membershipGroups, allIdentities);
                 remainder -= length;
             }
@@ -113,14 +117,14 @@ namespace DisplayGroups
             Console.WriteLine("Example: DisplayGroups.exe https://myaccount.visualstudio.com/DefaultCollection");
         }
 
-        private static void AddCollectionUsersAndGroupsToLists(TeamFoundationIdentity[] identities, List<TeamFoundationIdentity> membershipGroups,
+        private static void AddCollectionUsersAndGroupsToLists(TeamFoundationIdentity[] identities,
+            List<TeamFoundationIdentity> membershipGroups,
             Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             foreach (var identity in identities)
             {
                 if (identity != null)
                 {
-
                     allIdentities.Add(identity.Descriptor, identity);
 
                     if (identity.IsContainer)
@@ -131,7 +135,8 @@ namespace DisplayGroups
             }
         }
 
-        private static void DisplayGroupMembers(TeamFoundationIdentity group, Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
+        private static void DisplayGroupMembers(TeamFoundationIdentity group,
+            Dictionary<IdentityDescriptor, TeamFoundationIdentity> allIdentities)
         {
             // Output this group's membership
             Console.WriteLine("Members of group: {0}", group.DisplayName);
