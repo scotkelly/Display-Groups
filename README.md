@@ -12,7 +12,8 @@ DisplayGroups.exe https://myserver.visualstudio.com/DefaultCollection >GroupsAnd
 
 Here is an example of the output that you would see:
 
-Members of group:DefaultCollection\Project Collection Administrators:<br/>
+Members of group: [DefaultCollection]\Project Collection Administrators<br/>
+***
 vstfs:///Framework/IdentityDomain/bzz2ec97-f70a-4374-9037-9492666f000f\Team Foundation Administrators<br/>
 vstfs:///Framework/Generic/dd9075cf-d538-43d5-807f-3c7dba3a9k52\Project Collection Service Accounts<br/>
 wredford@contoso.com<br/>
@@ -22,10 +23,11 @@ daka@contoso.com<br/>
 bkel@contoso.com<br/>
 
 Members of group: [TEAM FOUNDATION]\Team Foundation Invited Users<br/>
+***
 wredford@contoso.com<br/>
 scot@contoso.com<br/>
 daka@contoso.com<br/>
 chris@contoso.com<br/>
-sastry@contoso.<br/>
+sastry@contoso.com<br/>
 abrk@contoso.com<br/>
-bkel@contoso.<br/>
+bkel@contoso.com<br/>
