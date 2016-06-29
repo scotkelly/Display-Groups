@@ -1,6 +1,6 @@
 # Display Groups
 
-This project is a code sample to show how to list all groups and membership of a Team Foundation Server (TFS) or Visual Studio Online (VSO) collection.
+This project is a code sample to show how to list all groups and membership of a Team Foundation Server (TFS) or Visual Studio Team Services (VSTS) collection.
 
 This is a command-line application, and the output can be redirected to a text file.
 
